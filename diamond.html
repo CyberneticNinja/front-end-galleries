@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lumen &amp; Co. — 3D Diamond</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;1,500&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root { --ink: #f4efe6; --muted: #a49ca8; --gold: #d8b878; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; }
+    body {
+      color: var(--ink); font-family: "Inter", system-ui, sans-serif; overflow: hidden;
+      background: radial-gradient(ellipse at 70% 45%, #2a2033 0%, #120e18 55%, #07060a 100%);
+    }
+    header { position: fixed; top: 0; left: 0; right: 0; display: flex; align-items: center; justify-content: space-between;
+      padding: 1.5rem 3rem; z-index: 5; }
+    .brand { font-family: "Cormorant Garamond", serif; font-size: 1.5rem; letter-spacing: .04em; }
+    nav { display: flex; gap: 2rem; font-size: .85rem; color: var(--muted); }
+
+    main { display: grid; grid-template-columns: 1fr 1.2fr; height: 100vh; height: 100dvh; align-items: center; padding: 0 3rem; }
+    .copy { max-width: 460px; z-index: 2; }
+    .eyebrow { color: var(--gold); letter-spacing: .25em; text-transform: uppercase; font-size: .72rem; }
+    h1 { font-family: "Cormorant Garamond", serif; font-weight: 500; font-size: clamp(2.6rem, 5vw, 4.6rem);
+      line-height: 1.02; margin: .8rem 0 1.2rem; }
+    h1 em { color: var(--gold); }
+    p { color: var(--muted); line-height: 1.7; margin: 0 0 2rem; }
+
+    .stones { display: flex; gap: .75rem; margin-bottom: 2rem; flex-wrap: wrap; }
+    .stone { font: inherit; font-size: .8rem; color: var(--ink); cursor: pointer; display: flex; align-items: center; gap: .5rem;
+      background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.15); border-radius: 999px; padding: .45rem .9rem .45rem .5rem; }
+    .stone i { width: 16px; height: 16px; border-radius: 50%; background: var(--c); box-shadow: inset 0 0 0 1px rgba(255,255,255,.4); }
+    .stone[aria-pressed="true"] { border-color: var(--gold); background: rgba(216,184,120,.12); }
+
+    .actions { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; }
+    .cta { background: var(--gold); color: #1a1408; text-decoration: none; padding: .9rem 1.6rem; border-radius: 999px; font-weight: 500; font-size: .9rem; }
+    .ghost { font: inherit; font-size: .85rem; color: var(--muted); background: none; border: 0; cursor: pointer; text-decoration: underline; }
+    .ghost:hover { color: var(--ink); }
+
+    .stage { position: relative; height: 100%; cursor: grab; }
+    .stage:active { cursor: grabbing; }
+    .stage canvas { display: block; width: 100%; height: 100%; }
+    .stage .hint { position: absolute; bottom: 2rem; left: 0; right: 0; text-align: center; font-size: .75rem; color: var(--muted); pointer-events: none; }
+    .stage .fallback { position: absolute; inset: 0; display: none; place-items: center; color: var(--muted); }
+
+    @media (max-width: 860px) {
+      body { overflow: auto; }
+      header { padding: 1rem 1.25rem; } nav { display: none; }
+      main { grid-template-columns: 1fr; grid-template-rows: 48vh auto; height: auto; padding: 4.5rem 1.25rem 2rem; }
+      .stage { order: -1; height: 48vh; }
+    }
+  </style>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <header>
+    <div class="brand">Lumen &amp; Co.</div>
+    <nav><span>Engagement</span><span>Bespoke</span><span>Our atelier</span><span>Visit us</span></nav>
+  </header>
+
+  <main>
+    <section class="copy">
+      <div class="eyebrow">Fine jewelry · Est. 1998</div>
+      <h1>Cut to <em>catch</em> the light</h1>
+      <p>Choose your stone and turn it in your hand. Every piece is set by our jewelers, one at a time.</p>
+      <div class="stones" id="stones" role="group" aria-label="Choose a stone">
+        <button class="stone" type="button" data-stone="diamond" aria-pressed="true" style="--c:#eef3ff"><i></i>Diamond</button>
+        <button class="stone" type="button" data-stone="sapphire" aria-pressed="false" style="--c:#2c4fd8"><i></i>Sapphire</button>
+        <button class="stone" type="button" data-stone="emerald" aria-pressed="false" style="--c:#1e9e63"><i></i>Emerald</button>
+        <button class="stone" type="button" data-stone="ruby" aria-pressed="false" style="--c:#c8102e"><i></i>Ruby</button>
+      </div>
+      <div class="actions">
+        <a class="cta" href="#">Book a fitting</a>
+        <button class="ghost" type="button" id="download">Download model (.glb)</button>
+      </div>
+    </section>
+
+    <div class="stage" id="stage">
+      <div class="hint">Drag to turn the stone</div>
+      <div class="fallback" id="fallback">3D isn't available in this browser.</div>
+    </div>
+  </main>
+
+  <script type="module" src="js/diamond.js"></script>
+  <script>
+    // Browsers block JavaScript modules on pages opened straight from disk.
+    if (location.protocol === 'file:') {
+      const f = document.getElementById('fallback');
+      f.innerHTML = 'Open this page through a local server to see the 3D stone,<br>for example <code>php -S localhost:8000</code> in this folder.';
+      f.style.cssText += 'display:grid;text-align:center;line-height:1.7;padding:2rem;';
+    }
+  </script>
+</body>
+</html>

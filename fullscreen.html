@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>National Parks — Fullscreen Slider</title>
+  <style>
+    :root { --speed: 800ms; --ease: cubic-bezier(.77, 0, .18, 1); --accent: #e9c46a; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; overflow: hidden; background: #0f1512; color: #fff;
+      font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+
+    /* 1. The big wrapper: exactly one screen, everything outside it is hidden */
+    .viewport { position: fixed; inset: 0; overflow: hidden; }
+
+    /* 2. Horizontal track: sections sit side by side, we move the whole track */
+    .track-x { display: flex; height: 100%; transition: transform var(--speed) var(--ease); will-change: transform; }
+    .section { flex: 0 0 100vw; height: 100%; position: relative; overflow: hidden; }
+
+    /* 3. Vertical track inside a section: slides stacked top to bottom */
+    .track-y { height: 100%; transition: transform var(--speed) var(--ease); will-change: transform; }
+    .slide { height: 100vh; height: 100dvh; position: relative; display: flex; align-items: center;
+      padding: 0 8vw; background: #1e3d2e center / cover no-repeat; }
+    .slide::before { content: ""; position: absolute; inset: 0;
+      background: linear-gradient(90deg, rgba(0,0,0,.7), rgba(0,0,0,.15)); }
+    .content { position: relative; max-width: 560px; }
+    .content small { letter-spacing: .18em; text-transform: uppercase; color: var(--accent); }
+    .content h1 { font-size: clamp(2.4rem, 7vw, 5rem); line-height: 1; margin: .3rem 0 .8rem; }
+    .content p { font-size: 1.1rem; line-height: 1.6; opacity: .9; margin: 0 0 1.5rem; }
+    .content .credit { font-size: .75rem; opacity: .6; }
+    .content .credit a { color: inherit; }
+
+    /* Text animates in when its slide becomes active */
+    .slide .content > * { opacity: 0; transform: translateY(24px); transition: opacity .6s ease, transform .6s ease; }
+    .slide.is-active .content > * { opacity: 1; transform: none; transition-delay: calc(var(--speed) * .5); }
+    .slide.is-active .content > *:nth-child(2) { transition-delay: calc(var(--speed) * .5 + 80ms); }
+    .slide.is-active .content > *:nth-child(3) { transition-delay: calc(var(--speed) * .5 + 160ms); }
+    .slide.is-active .content > *:nth-child(4) { transition-delay: calc(var(--speed) * .5 + 240ms); }
+
+    .btn { font: inherit; display: inline-flex; align-items: center; gap: .5rem; cursor: pointer;
+      padding: .75rem 1.4rem; border-radius: 999px; border: 1px solid var(--accent);
+      background: var(--accent); color: #1b1b1b; font-weight: 600; }
+    .btn.ghost { background: transparent; color: #fff; border-color: rgba(255,255,255,.7); }
+    .btn:hover { filter: brightness(1.1); }
+
+    /* Vertical dots for the parks slider */
+    .dots { position: absolute; right: 3vw; top: 50%; transform: translateY(-50%); z-index: 5;
+      display: flex; flex-direction: column; gap: 12px; }
+    .dots button { width: 12px; height: 12px; padding: 0; border-radius: 50%; cursor: pointer;
+      border: 2px solid #fff; background: transparent; transition: transform .3s, background .3s; }
+    .dots button[aria-current="true"] { background: #fff; transform: scale(1.3); }
+
+    .counter { position: absolute; right: 3vw; bottom: 32px; z-index: 5; font-variant-numeric: tabular-nums; opacity: .8; }
+    .hint { position: absolute; left: 8vw; bottom: 32px; z-index: 5; font-size: .8rem; opacity: .65; }
+
+    /* Top nav for the horizontal sections */
+    .nav { position: fixed; top: 0; left: 0; right: 0; z-index: 20; display: flex; gap: 1.5rem;
+      padding: 1.25rem 8vw; align-items: center; }
+    .nav .brand { font-weight: 700; margin-right: auto; }
+    .nav button { font: inherit; background: none; border: 0; color: #fff; cursor: pointer; opacity: .7;
+      padding: .25rem 0; border-bottom: 2px solid transparent; }
+    .nav button[aria-current="true"] { opacity: 1; border-bottom-color: var(--accent); }
+
+    @media (prefers-reduced-motion: reduce) { :root { --speed: 1ms; } }
+  </style>
+</head>
+<body>
+  <nav class="nav" aria-label="Sections">
+    <span class="brand">Wild Places</span>
+    <button type="button" data-goto="0">Home</button>
+    <button type="button" data-goto="1">Parks</button>
+    <button type="button" data-goto="2">Plan</button>
+  </nav>
+
+  <div class="viewport">
+    <div class="track-x" id="track-x">
+
+      <!-- Section 0: home -->
+      <section class="section" aria-label="Home">
+        <div class="track-y">
+          <div class="slide is-active" data-bg="1/12/Yosemite_National_Park.jpg">
+            <div class="content">
+              <small>Explore America</small>
+              <h1>Wild places worth the trip</h1>
+              <p>Five national parks, from glacier-carved valleys to desert arches.</p>
+              <button class="btn" type="button" data-goto="1">Explore the parks &rarr;</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 1: parks (vertical slider, filled by JS) -->
+      <section class="section" aria-label="Parks" id="parks">
+        <div class="track-y" id="track-y"></div>
+        <div class="dots" id="dots" aria-label="Choose a park"></div>
+        <div class="counter" id="counter"></div>
+        <div class="hint">Scroll, swipe, or use &uarr; &darr; to browse. &larr; &rarr; to change section.</div>
+      </section>
+
+      <!-- Section 2: plan -->
+      <section class="section" aria-label="Plan">
+        <div class="track-y">
+          <div class="slide" data-bg="e/e9/Zion_National_Park_ZION4523.jpg">
+            <div class="content">
+              <small>Plan your visit</small>
+              <h1>Ready to go?</h1>
+              <p>Pick a park, book your campsite early, and check road conditions before you leave.</p>
+              <button class="btn ghost" type="button" data-goto="1">&larr; Back to parks</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+  <script src="js/fullscreen.js"></script>
+</body>
+</html>

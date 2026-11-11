@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Taurus — Model Accordion</title>
+  <style>
+    :root {
+      --bg: #0d0d0f;
+      --ink: #f4f2ec;
+      --muted: rgba(244, 242, 236, .62);
+      --line: rgba(244, 242, 236, .14);
+
+      --grow: 5;                              /* how much wider the open panel is than a closed one */
+      --speed: .65s;
+      --ease: cubic-bezier(.22, .8, .2, 1);
+      --car-w: clamp(420px, 50vw, 820px);       /* the car photo keeps this size; panels just crop it */
+      --pad: clamp(.7rem, 1.3vw, 2rem);
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; }
+    body { background: var(--bg); color: var(--ink); font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+
+    /* ---------- The accordion: a flex row whose children trade width ---------- */
+    .accordion { display: flex; height: 100vh; min-height: 560px; overflow: hidden; }
+
+    .panel {
+      position: relative; flex: 1 1 0; min-width: 0; overflow: hidden;
+      padding: var(--pad); cursor: pointer; outline: none;
+      background:
+        radial-gradient(ellipse 90% 55% at 50% 82%, color-mix(in srgb, var(--accent) 34%, transparent), transparent 70%),
+        linear-gradient(180deg, #17171b, #0d0d0f);
+      border-left: 1px solid var(--line);
+      transition: flex-grow var(--speed) var(--ease);
+    }
+    .panel:first-child { border-left: 0; }
+
+    /* Open state: the hovered (or keyboard-focused / tapped) panel.
+       When nothing is hovered or focused, the first panel stays open. */
+    .panel:hover,
+    .panel:focus-within,
+    .panel:focus,
+    .accordion:not(:hover):not(:focus-within) .panel:first-child { flex-grow: var(--grow); }
+
+    /* If the mouse is on one panel, a previously focused one closes again */
+    .accordion:hover .panel:not(:hover) { flex-grow: 1; }
+
+    /* ---------- Heading (always visible) ---------- */
+    .eyebrow { opacity: 0; transition: opacity .25s ease; margin: 0 0 .35rem; font-size: .72rem; letter-spacing: .16em; text-transform: uppercase; color: var(--accent); white-space: nowrap; }
+    .panel h2 { margin: 0; font-size: clamp(.9rem, 1.5vw, 1.8rem); font-weight: 600; letter-spacing: -.02em; line-height: 1; transform-origin: left top; transition: transform var(--speed) var(--ease); }
+
+    /* ---------- Details (only in the open panel) ---------- */
+    .details {
+      width: min(30rem, 38vw);                  /* fixed width so text doesn't re-wrap while the panel grows */
+      margin-top: 2.6rem;
+      opacity: 0; transform: translateY(10px); pointer-events: none;
+      transition: opacity .25s ease, transform .25s ease;
+    }
+    .details p { margin: 0 0 1.25rem; line-height: 1.55; color: var(--muted); }
+    .specs { display: flex; gap: clamp(1rem, 2.4vw, 2.25rem); margin: 0 0 1.5rem; padding: 1rem 0 0; border-top: 1px solid var(--line); list-style: none; }
+    .specs b { display: block; font-size: clamp(1.1rem, 1.7vw, 1.6rem); font-weight: 600; }
+    .specs small { font-size: .7rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+
+    /* ---------- The car ---------- */
+    .car {
+      position: absolute; left: 50%;
+      bottom: calc(11vh - var(--car-w) * .163);  /* photos have empty space under the tyres; this cancels it */
+      width: var(--car-w); max-width: none; height: auto; display: block;
+      transform: translateX(-26%) scale(.92);    /* closed: slid sideways so you see one end of the car */
+      filter: saturate(.75) brightness(.8);
+      transition: transform var(--speed) var(--ease), filter var(--speed) ease;
+      pointer-events: none; user-select: none;
+    }
+
+    /* ---------- What changes when a panel is open ---------- */
+    .panel:hover .car,
+    .panel:focus-within .car,
+    .panel:focus .car,
+    .accordion:not(:hover):not(:focus-within) .panel:first-child .car { transform: translateX(-50%) scale(1); filter: none; }
+
+    .panel:hover .eyebrow,
+    .panel:focus-within .eyebrow,
+    .panel:focus .eyebrow,
+    .accordion:not(:hover):not(:focus-within) .panel:first-child .eyebrow { opacity: 1; transition-delay: .2s; }
+    .accordion:hover .panel:not(:hover) .eyebrow { opacity: 0; transition-delay: 0s; }
+
+    .panel:hover h2,
+    .panel:focus-within h2,
+    .panel:focus h2,
+    .accordion:not(:hover):not(:focus-within) .panel:first-child h2 { transform: scale(1.9); }
+
+    .panel:hover .details,
+    .panel:focus-within .details,
+    .panel:focus .details,
+    .accordion:not(:hover):not(:focus-within) .panel:first-child .details {
+      opacity: 1; transform: none; pointer-events: auto;
+      transition-delay: .28s;                    /* wait for the panel to open before the text fades in */
+    }
+
+    /* Mouse moved to another panel: reset the focused one */
+    .accordion:hover .panel:not(:hover) .car { transform: translateX(-26%) scale(.92); filter: saturate(.75) brightness(.8); }
+    .accordion:hover .panel:not(:hover) h2 { transform: none; }
+    .accordion:hover .panel:not(:hover) .details { opacity: 0; transform: translateY(10px); pointer-events: none; transition-delay: 0s; }
+
+    /* A photo shot on a black studio background instead of a cutout:
+       'screen' makes the black vanish into the panel, leaving the car and its floor glow */
+    .car--studio { mix-blend-mode: screen; }
+
+    .panel:focus-visible { box-shadow: inset 0 0 0 2px var(--accent); }
+
+    .back { position: fixed; right: 1rem; bottom: .9rem; z-index: 5; font-size: .72rem; color: var(--muted); text-decoration: none; }
+    .back:hover { color: var(--ink); }
+
+    /* ---------- Phones: same idea, stacked, panels trade height instead ---------- */
+    @media (max-width: 760px) {
+      :root { --car-w: min(92vw, 420px); --grow: 3; }
+      .accordion { flex-direction: column; min-height: 1150px; }
+      .panel { border-left: 0; border-top: 1px solid var(--line); }
+      .panel:first-child { border-top: 0; }
+      .details { width: calc(100vw - var(--pad) * 2); margin-top: .9rem; }
+      .details p { margin-bottom: .8rem; font-size: .9rem; }
+      .specs { margin-bottom: 0; padding-top: .7rem; }
+      .car { left: auto; right: -18%; bottom: calc(var(--car-w) * -.19); transform: scale(.7); transform-origin: right bottom; }
+      .panel:hover .car, .panel:focus-within .car, .panel:focus .car,
+      .accordion:not(:hover):not(:focus-within) .panel:first-child .car { transform: scale(.8); }
+      .accordion:hover .panel:not(:hover) .car { transform: scale(.7); }
+    }
+
+    @media (prefers-reduced-motion: reduce) { :root { --speed: .01s; } }
+  </style>
+</head>
+<body>
+
+  <main class="accordion" aria-label="Taurus models">
+
+    <article class="panel" tabindex="0" style="--accent: #b8c0cc">
+      <p class="eyebrow">Sports coupé</p>
+      <h2>Argento</h2>
+      <div class="details">
+        <p>Silver paint, red calipers and a shape that hasn't needed changing. The one you take out on an ordinary Tuesday.</p>
+        <ul class="specs">
+          <li><b>480</b><small>hp</small></li>
+          <li><b>3.4s</b><small>0–100 km/h</small></li>
+          <li><b>305</b><small>km/h top</small></li>
+          <li><b>2+2</b><small>seats</small></li>
+        </ul>
+      </div>
+      <img class="car car--studio" src="images/cars/argento/side.webp" alt="Taurus Argento in silver, side view" width="1200" height="675">
+    </article>
+
+    <article class="panel" tabindex="0" style="--accent: #d0202f">
+      <p class="eyebrow">V10 · Coupé</p>
+      <h2>Rosso</h2>
+      <div class="details">
+        <p>Deep red over carbon, a rear wing that rises at speed and a V10 that revs faster than a needle can follow.</p>
+        <ul class="specs">
+          <li><b>560</b><small>hp</small></li>
+          <li><b>3.7s</b><small>0–100 km/h</small></li>
+          <li><b>325</b><small>km/h top</small></li>
+          <li><b>9,000</b><small>rpm</small></li>
+        </ul>
+      </div>
+      <img class="car car--studio" src="images/cars/rosso/side.webp" alt="Taurus Rosso in red, side view" width="1200" height="675">
+    </article>
+
+    <article class="panel" tabindex="0" style="--accent: #f5c518">
+      <p class="eyebrow">Heritage · V12</p>
+      <h2>Lampo</h2>
+      <div class="details">
+        <p>The poster car. A wedge from the nineties with a V12, a gated manual and no interest in being sensible.</p>
+        <ul class="specs">
+          <li><b>530</b><small>hp</small></li>
+          <li><b>4.0s</b><small>0–100 km/h</small></li>
+          <li><b>330</b><small>km/h top</small></li>
+          <li><b>5.7L</b><small>V12</small></li>
+        </ul>
+      </div>
+      <img class="car car--studio" src="images/cars/lampo/side.webp" alt="Taurus Lampo in yellow, side view" width="1200" height="675">
+    </article>
+
+    <article class="panel" tabindex="0" style="--accent: #c8203a">
+      <p class="eyebrow">Hypercar</p>
+      <h2>Vento</h2>
+      <div class="details">
+        <p>Candy red over bare carbon, a twin-turbo V8 and more power than the tyres have any right to handle.</p>
+        <ul class="specs">
+          <li><b>1,500</b><small>hp</small></li>
+          <li><b>2.8s</b><small>0–100 km/h</small></li>
+          <li><b>400</b><small>km/h top</small></li>
+          <li><b>5.0L</b><small>V8 TT</small></li>
+        </ul>
+      </div>
+      <img class="car car--studio" src="images/cars/vento/side.webp" alt="Taurus Vento in red and carbon, side view" width="1200" height="675">
+    </article>
+
+    <article class="panel" tabindex="0" style="--accent: #ffd21f">
+      <p class="eyebrow">Lightweight</p>
+      <h2>Falco</h2>
+      <div class="details">
+        <p>Stripped, stiffened and painted so nobody misses it. Carbon everywhere the eye lands and several places it does not.</p>
+        <ul class="specs">
+          <li><b>765</b><small>hp</small></li>
+          <li><b>2.8s</b><small>0–100 km/h</small></li>
+          <li><b>330</b><small>km/h top</small></li>
+          <li><b>1,340kg</b><small>kerb</small></li>
+        </ul>
+      </div>
+      <img class="car car--studio" src="images/cars/falco/side.webp" alt="Taurus Falco in yellow, side view" width="1200" height="675">
+    </article>
+
+    <article class="panel" tabindex="0" style="--accent: #ff7a1a">
+      <p class="eyebrow">Mid-engine · V8</p>
+      <h2>Brava</h2>
+      <div class="details">
+        <p>The engine moved behind the seats and everything changed. Supercar shape, everyday manners.</p>
+        <ul class="specs">
+          <li><b>495</b><small>hp</small></li>
+          <li><b>2.9s</b><small>0–100 km/h</small></li>
+          <li><b>312</b><small>km/h top</small></li>
+          <li><b>6.2L</b><small>V8</small></li>
+        </ul>
+      </div>
+      <img class="car car--studio" src="images/cars/brava/side.webp" alt="Taurus Brava in orange, side view" width="1200" height="675">
+    </article>
+
+    <article class="panel" tabindex="0" style="--accent: #2f6df0">
+      <p class="eyebrow">Hypercar · Grand tourer</p>
+      <h2>Celeste</h2>
+      <div class="details">
+        <p>The Vento's quieter sibling. Deep blue over bare carbon, with the same shove and a longer stride between fuel stops.</p>
+        <ul class="specs">
+          <li><b>1,500</b><small>hp</small></li>
+          <li><b>2.9s</b><small>0–100 km/h</small></li>
+          <li><b>395</b><small>km/h top</small></li>
+          <li><b>5.0L</b><small>V8 TT</small></li>
+        </ul>
+      </div>
+      <img class="car car--studio" src="images/cars/celeste/side.webp" alt="Taurus Celeste in blue and carbon, side view" width="1200" height="675">
+    </article>
+
+  </main>
+
+  <a class="back" href="index.html">← All galleries</a>
+
+</body>
+</html>

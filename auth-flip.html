@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Login / Register — Page Flip</title>
+  <style>
+    :root {
+      --turn-time: 1.1s;
+      --ease: cubic-bezier(.65, .05, .25, 1);
+      --paper: #ffffff;
+      --ink: #16161a;
+      --muted: #6c6c75;
+      --line: #dcdce2;
+      --accent: #4f46e5;
+      --login-side: #4f46e5;     /* colour of the "Log in" prompt page */
+      --register-side: #e5603f;  /* colour of the "Register" prompt page */
+      --w: min(440px, 45vw);     /* one page */
+      --h: min(580px, 86vh);
+      /* desktop turns left over a vertical spine */
+      --turn: rotateY(-180deg);
+      --back: rotateY(180deg);
+      --hinge: left center;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; }
+    body {
+      background: #000; color: var(--ink);
+      font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+      display: grid; place-items: center; overflow: hidden;
+      transition: background-color var(--turn-time) var(--ease);
+    }
+    body.is-register { background: #fff; }
+
+    /* ---- The book ---- */
+    .book {
+      position: relative; width: calc(var(--w) * 2); height: var(--h);
+      display: grid; grid-template-columns: 1fr 1fr;
+      perspective: 2400px;
+      filter: drop-shadow(0 30px 60px rgba(0,0,0,.35));
+    }
+    body.is-register .book { filter: drop-shadow(0 30px 60px rgba(0,0,0,.18)); }
+
+    .page {
+      position: relative; height: 100%; overflow: hidden;
+      padding: clamp(1.5rem, 4vw, 3rem);
+      display: flex; flex-direction: column; justify-content: center;
+    }
+    .page.left  { border-radius: 18px 0 0 18px; }
+    .page.right { border-radius: 0 18px 18px 0; }
+    .page.form  { background: var(--paper); }
+    .page.prompt { color: #fff; text-align: center; align-items: center; }
+    .page.prompt.to-login    { background: var(--login-side); }
+    .page.prompt.to-register { background: var(--register-side); }
+
+    /* The turning leaf sits over the right page, hinged on the spine */
+    .leaf {
+      position: absolute; top: 0; left: 50%; width: 50%; height: 100%;
+      transform-style: preserve-3d; transform-origin: var(--hinge);
+      transition: transform var(--turn-time) var(--ease);
+      z-index: 5;
+    }
+    .book.is-turned .leaf { transform: var(--turn); }
+    .leaf .page { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+    .leaf .back { transform: var(--back); }
+    .leaf .back.left { border-radius: 18px 0 0 18px; }
+
+    /* Shading that sweeps across the page as it turns */
+    .leaf .page::after {
+      content: ""; position: absolute; inset: 0; pointer-events: none; opacity: 0;
+      background: linear-gradient(90deg, rgba(0,0,0,.28), rgba(0,0,0,0) 60%);
+      transition: opacity calc(var(--turn-time) / 2) ease;
+    }
+    .book.is-turning .leaf .page::after { opacity: 1; }
+
+    /* Spine shadow on the static pages */
+    .page.left::before, .page.right::before {
+      content: ""; position: absolute; top: 0; bottom: 0; width: 28px; pointer-events: none;
+    }
+    .page.left::before  { right: 0; background: linear-gradient(270deg, rgba(0,0,0,.10), transparent); }
+    .page.right::before { left: 0;  background: linear-gradient(90deg,  rgba(0,0,0,.10), transparent); }
+
+    /* ---- Content ---- */
+    h1 { font-size: 1.9rem; margin: 0 0 .35rem; letter-spacing: -.02em; }
+    .sub { color: var(--muted); margin: 0 0 1.75rem; font-size: .95rem; }
+    .prompt h2 { font-size: clamp(1.6rem, 3vw, 2.2rem); margin: 0 0 .75rem; letter-spacing: -.02em; }
+    .prompt p { margin: 0 auto 2rem; max-width: 280px; line-height: 1.55; opacity: .92; }
+
+    form { display: grid; gap: 1rem; }
+    label { display: grid; gap: .35rem; font-size: .82rem; font-weight: 500; }
+    input[type="text"], input[type="email"], input[type="password"] {
+      font: inherit; padding: .75rem .9rem; border: 1px solid var(--line); border-radius: 10px; background: #fafafb;
+      width: 100%; min-width: 0;
+    }
+    label, form > * { min-width: 0; }
+    input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(79,70,229,.18); background: #fff; }
+    .row { display: flex; justify-content: space-between; align-items: center; font-size: .82rem; }
+    .row a { color: var(--accent); text-decoration: none; }
+    .check { display: flex; gap: .5rem; align-items: center; font-weight: 400; grid-template-columns: none; }
+    .two { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
+
+    .btn { font: inherit; font-weight: 600; border: 0; cursor: pointer; border-radius: 10px; padding: .85rem 1.2rem; }
+    .btn.primary { background: var(--ink); color: #fff; }
+    .btn.primary:hover { background: #2c2c33; }
+    .btn.outline { background: transparent; color: #fff; border: 2px solid rgba(255,255,255,.85); border-radius: 999px; padding: .75rem 2rem; }
+    .btn.outline:hover { background: rgba(255,255,255,.12); }
+
+    .error { color: #c4321a; font-size: .8rem; min-height: 1em; margin: -.4rem 0 0; }
+    .note  { color: #1f7a3d; font-size: .8rem; min-height: 1em; margin: -.4rem 0 0; }
+
+    /* ---- Phones: pages stack, the bottom page turns up over a horizontal spine ---- */
+    @media (max-width: 720px) {
+      :root { --w: min(92vw, 420px); --h: min(46vh, 430px); --turn: rotateX(180deg); --back: rotateX(180deg); --hinge: center top; }
+      body { overflow: auto; }
+      .book { width: var(--w); height: calc(var(--h) * 2); grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; }
+      .page { padding: 1.25rem 1.4rem; }
+      .page.left  { border-radius: 18px 18px 0 0; }
+      .page.right { border-radius: 0 0 18px 18px; }
+      .leaf { left: 0; top: 50%; width: 100%; height: 50%; }
+      .leaf .back.left { border-radius: 18px 18px 0 0; }
+      .page.left::before  { top: auto; left: 0; right: 0; bottom: 0; width: auto; height: 20px; background: linear-gradient(0deg, rgba(0,0,0,.1), transparent); }
+      .page.right::before { left: 0; right: 0; top: 0; bottom: auto; width: auto; height: 20px; background: linear-gradient(180deg, rgba(0,0,0,.1), transparent); }
+      h1 { font-size: 1.4rem; } .sub { margin-bottom: .9rem; font-size: .85rem; }
+      form { gap: .6rem; } input[type="text"], input[type="email"], input[type="password"] { padding: .55rem .75rem; }
+      .prompt p { margin-bottom: 1.2rem; }
+      .hide-sm { display: none; }
+    }
+    @media (prefers-reduced-motion: reduce) { :root { --turn-time: .01s; } }
+  </style>
+</head>
+<body>
+  <div class="book" id="book">
+
+    <!-- Static left page: login form (covered after the turn) -->
+    <section class="page left form" id="login-page" aria-label="Log in">
+      <h1>Welcome back</h1>
+      <p class="sub">Log in to continue to your account.</p>
+      <form id="login-form" novalidate>
+        <label>Email <input type="email" name="email" autocomplete="email" placeholder="you@example.com" required></label>
+        <label>Password <input type="password" name="password" autocomplete="current-password" placeholder="••••••••" required></label>
+        <div class="row">
+          <label class="check"><input type="checkbox" name="remember"> Remember me</label>
+          <a href="#">Forgot password?</a>
+        </div>
+        <p class="error" aria-live="polite"></p>
+        <button class="btn primary" type="submit">Log in</button>
+      </form>
+    </section>
+
+    <!-- Static right page: "log in" prompt (revealed after the turn) -->
+    <section class="page right prompt to-login" id="login-prompt" aria-label="Switch to log in">
+      <h2>Already one of us?</h2>
+      <p>If you already have an account, log in to pick up where you left off.</p>
+      <button class="btn outline" type="button" data-show="login">Log in</button>
+    </section>
+
+    <!-- The turning page: front = register prompt, back = register form -->
+    <div class="leaf" id="leaf">
+      <section class="page right prompt to-register front" id="register-prompt" aria-label="Switch to register">
+        <h2>New here?</h2>
+        <p>Create an account in under a minute and start exploring.</p>
+        <button class="btn outline" type="button" data-show="register">Register</button>
+      </section>
+
+      <section class="page left form back" id="register-page" aria-label="Register">
+        <h1>Create account</h1>
+        <p class="sub">It only takes a minute.</p>
+        <form id="register-form" novalidate>
+          <div class="two">
+            <label>First name <input type="text" name="first" autocomplete="given-name" required></label>
+            <label>Last name <input type="text" name="last" autocomplete="family-name" required></label>
+          </div>
+          <label>Email <input type="email" name="email" autocomplete="email" placeholder="you@example.com" required></label>
+          <label>Password <input type="password" name="password" autocomplete="new-password" placeholder="At least 8 characters" required minlength="8"></label>
+          <label class="hide-sm">Confirm password <input type="password" name="confirm" autocomplete="new-password" required></label>
+          <label class="check"><input type="checkbox" name="terms" required> I agree to the terms</label>
+          <p class="error" aria-live="polite"></p>
+          <button class="btn primary" type="submit">Create account</button>
+        </form>
+      </section>
+    </div>
+
+  </div>
+
+  <script src="js/auth-flip.js"></script>
+</body>
+</html>

@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ostra Atelier — Mosaic Hero</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    /* Animatable tile values (needed so --y and --h can transition) */
+    @property --y { syntax: '<number>'; inherits: true; initial-value: 0; }
+    @property --h { syntax: '<number>'; inherits: true; initial-value: 0; }
+
+    :root {
+      --frame: #e7e7e4;
+      --paper: #f6f5f1;
+      --ink: #121212;
+      --muted: #6e6e6a;
+      --radius: 22px;          /* tile corner radius */
+      --morph: 1.6s;           /* how long tiles take to change shape */
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; }
+    body {
+      background: var(--frame); color: var(--ink);
+      font-family: "Inter", system-ui, sans-serif;
+      padding: 16px;
+    }
+
+    /* The rounded "browser card" the design sits in */
+    .page {
+      position: relative; height: calc(100vh - 32px); height: calc(100dvh - 32px); min-height: 560px;
+      background: var(--paper); border-radius: 28px; overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0,0,0,.12);
+      display: grid; grid-template-columns: 42% 1fr;
+    }
+
+    /* ---- Mosaic ---- */
+    .mosaic { position: relative; height: 100%; }
+    .tile {
+      position: absolute;
+      left:   calc(var(--x) * 100%);
+      width:  calc(var(--w) * 100%);
+      top:    calc(var(--y) * 100%);
+      height: calc(var(--h) * 100%);
+      border-radius: var(--radius);
+      overflow: hidden;
+      transition: --y var(--morph) cubic-bezier(.7, 0, .2, 1), --h var(--morph) cubic-bezier(.7, 0, .2, 1);
+    }
+    /* Every tile holds the SAME image, sized to the whole mosaic and shifted
+       back by the tile's own offset, so all tiles line up into one picture. */
+    .tile img {
+      position: absolute;
+      width:  calc(100% / var(--w));
+      height: calc(100% / max(var(--h), .001));
+      left:   calc(-100% * var(--x) / var(--w));
+      top:    calc(-100% * var(--y) / max(var(--h), .001));
+      object-fit: cover;
+      object-position: var(--focus, 50% 30%);
+      transform: translate(var(--px, 0px), var(--py, 0px)) scale(1.06);
+      transition: transform .6s ease-out;
+      pointer-events: none;
+    }
+
+    /* ---- Nav ---- */
+    .nav { position: absolute; top: 0; left: 0; right: 0; z-index: 5; display: grid;
+      grid-template-columns: 42% 1fr auto; align-items: center; padding: 1.4rem 2rem; }
+    .brand { display: flex; align-items: center; gap: .55rem; font-size: .8rem; font-weight: 500;
+      color: var(--ink); letter-spacing: .02em; justify-self: center;
+      background: var(--paper); padding: .4rem .75rem .4rem .45rem; border-radius: 10px; }
+    .brand svg { width: 22px; height: 22px; }
+    .links { display: flex; gap: 2rem; justify-content: center; font-size: .8rem; color: var(--muted); }
+    .links a { color: inherit; text-decoration: none; }
+    .links a:hover { color: var(--ink); }
+    .login { font-size: .78rem; padding: .45rem .9rem; border-radius: 8px; background: #ebeae5;
+      color: var(--ink); text-decoration: none; }
+
+    /* ---- Copy ---- */
+    .copy { display: flex; flex-direction: column; align-items: center; justify-content: center;
+      text-align: center; padding: 6rem 2rem 3rem; }
+    .mark { width: 26px; height: 26px; margin-bottom: 2.5rem; }
+    .eyebrow, h1 { font-family: "Archivo", sans-serif; font-stretch: 72%; text-transform: uppercase;
+      font-weight: 800; letter-spacing: -.01em; margin: 0; }
+    .eyebrow { font-size: clamp(1.1rem, 2vw, 1.9rem); }
+    h1 { font-size: clamp(3rem, 8.4vw, 8.2rem); line-height: .86; margin-top: .3rem; }
+    .copy p { margin: 1.8rem 0 3.5rem; font-size: clamp(.9rem, 1.1vw, 1.05rem); }
+    .cta { display: inline-flex; align-items: center; gap: .6rem; background: var(--ink); color: #fff;
+      text-decoration: none; padding: .95rem 1.6rem; border-radius: 999px; font-size: .9rem; }
+    .cta:hover { background: #333; }
+
+    /* Copy fades up after the tiles start moving */
+    .copy > * { opacity: 0; transform: translateY(18px); animation: rise .9s cubic-bezier(.2,.7,.2,1) forwards; }
+    .copy > *:nth-child(2) { animation-delay: .5s; }
+    .copy > *:nth-child(3) { animation-delay: .6s; }
+    .copy > *:nth-child(4) { animation-delay: .75s; }
+    .copy > *:nth-child(5) { animation-delay: .9s; }
+    .copy > *:nth-child(1) { animation-delay: .4s; }
+    @keyframes rise { to { opacity: 1; transform: none; } }
+
+    .credit { position: absolute; right: 1.5rem; bottom: 1rem; font-size: .7rem; color: var(--muted); }
+    .credit a { color: inherit; }
+
+    /* ---- Phones: mosaic on top, copy below ---- */
+    @media (max-width: 800px) {
+      body { padding: 8px; }
+      .page { grid-template-columns: 1fr; grid-template-rows: 46% 1fr; height: auto; min-height: calc(100dvh - 16px); }
+      .nav { grid-template-columns: auto 1fr auto; padding: 1rem 1.2rem; }
+      .links { display: none; }
+      .login { grid-column: 3; justify-self: end; }
+      .brand { justify-self: start; }
+      .copy { padding: 2rem 1.25rem 3rem; }
+      .mark { margin-bottom: 1.25rem; }
+      .copy p { margin: 1.2rem 0 2rem; }
+      :root { --radius: 14px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      :root { --morph: 0s; }
+      .copy > * { animation: none; opacity: 1; transform: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="nav">
+      <div class="brand">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect width="24" height="24" rx="5" fill="#2b2bd6"/><circle cx="12" cy="12" r="5" fill="none" stroke="#fff" stroke-width="2.2"/></svg>
+        OSTRA atelier
+      </div>
+      <nav class="links" aria-label="Main">
+        <a href="#">Atelier</a><a href="#">Process</a><a href="#">Perfumers</a><a href="#">Journal</a>
+      </nav>
+      <a class="login" href="#">Log in</a>
+    </header>
+
+    <div class="mosaic" id="mosaic" aria-hidden="true"></div>
+
+    <main class="copy">
+      <svg class="mark" viewBox="0 0 26 26" aria-hidden="true"><circle cx="13" cy="13" r="10" fill="none" stroke="#121212" stroke-width="3"/><circle cx="13" cy="13" r="3" fill="#121212"/></svg>
+      <div class="eyebrow">A fragrance studio for</div>
+      <h1>People who<br>linger</h1>
+      <p>Every scent composed by hand, for one person at a time.</p>
+      <a class="cta" href="#">Book a consultation <span aria-hidden="true">&#8599;</span></a>
+    </main>
+
+    <div class="credit">Image: <a href="https://commons.wikimedia.org/wiki/File:Johannes_Vermeer_(1632-1675)_-_The_Girl_With_The_Pearl_Earring_(1665).jpg" target="_blank" rel="noopener">Vermeer, public domain</a></div>
+  </div>
+
+  <script src="js/mosaic.js"></script>
+</body>
+</html>

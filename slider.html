@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>National Parks — Card Slider</title>
+  <style>
+    :root { --card-w: 170px; --card-h: 250px; --gap: 18px; --speed: 900ms; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; overflow: hidden; background: #111; color: #fff;
+      font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+
+    .stage { position: fixed; inset: 0; }
+
+    .slide {
+      position: absolute;
+      background-size: cover;
+      background-position: center;
+      border-radius: 14px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.45);
+      transition: left var(--speed) ease, top var(--speed) ease,
+                  width var(--speed) ease, height var(--speed) ease,
+                  border-radius var(--speed) ease, opacity 500ms ease;
+      overflow: hidden;
+    }
+    .slide.is-bg { border-radius: 0; box-shadow: none; }
+    .slide.no-anim { transition: none; }
+
+    .slide .label {
+      position: absolute; left: 0; right: 0; bottom: 0;
+      padding: 2.5rem .8rem .8rem;
+      background: linear-gradient(transparent, rgba(0,0,0,.75));
+      transition: opacity 300ms ease;
+    }
+    .slide .label small { display: block; opacity: .8; font-size: .75rem; }
+    .slide .label strong { font-size: 1rem; }
+    .slide.is-bg .label { opacity: 0; }
+
+    .shade { position: fixed; inset: 0; pointer-events: none;
+      background: linear-gradient(90deg, rgba(0,0,0,.65) 0%, rgba(0,0,0,.15) 55%, rgba(0,0,0,0) 100%); z-index: 50; }
+
+    .info { position: fixed; left: 6vw; top: 50%; transform: translateY(-50%);
+      max-width: 420px; z-index: 60; }
+    .info small { letter-spacing: .15em; text-transform: uppercase; opacity: .8; }
+    .info h1 { font-size: clamp(2.5rem, 6vw, 4.5rem); margin: .25rem 0 .5rem; line-height: 1; }
+    .info p { line-height: 1.5; opacity: .9; }
+    .info .credit { font-size: .75rem; opacity: .7; }
+    .info .credit a { color: inherit; }
+    .info.fade > * { animation: rise 700ms ease both; }
+    .info.fade > *:nth-child(2) { animation-delay: 80ms; }
+    .info.fade > *:nth-child(3) { animation-delay: 160ms; }
+    @keyframes rise { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: none; } }
+
+    .controls { position: fixed; left: 6vw; bottom: 40px; z-index: 60; display: flex; gap: .5rem; align-items: center; }
+    .controls button { font: inherit; padding: .45rem 1rem; border-radius: 999px; cursor: pointer;
+      border: 1px solid rgba(255,255,255,.6); background: transparent; color: #fff; }
+    .controls button:hover { background: rgba(255,255,255,.15); }
+    .progress { width: 140px; height: 3px; background: rgba(255,255,255,.25); border-radius: 3px; overflow: hidden; }
+    .progress span { display: block; height: 100%; width: 0; background: #fff; }
+
+    @media (max-width: 700px) { :root { --card-w: 110px; --card-h: 160px; --gap: 12px; } .info { top: 30%; } }
+    @media (prefers-reduced-motion: reduce) { .slide { transition: opacity 300ms ease; } }
+  </style>
+</head>
+<body>
+  <div class="stage" id="stage"></div>
+  <div class="shade"></div>
+
+  <section class="info" id="info" aria-live="polite"></section>
+
+  <div class="controls">
+    <button id="toggle" type="button">Pause</button>
+    <button id="next" type="button">Next</button>
+    <div class="progress"><span id="bar"></span></div>
+  </div>
+
+  <script src="js/slider.js"></script>
+</body>
+</html>

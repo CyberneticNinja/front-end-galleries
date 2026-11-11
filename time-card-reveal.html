@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>National Parks — Timed Card Reveal</title>
+  <style>
+    :root {
+      --bg: #f4f1ea;
+      --ink: #1f2a24;
+      --muted: #5b6660;
+      --forest: #2f5d46;
+      --forest-dark: #1e3d2e;
+      --card-w: 220px;
+      --card-h: 320px;
+      --flip-ms: 700ms;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+    }
+
+    .header {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem 1rem 1rem;
+    }
+
+    .header h1 { margin: 0 0 .25rem; font-size: 2rem; }
+    .header p  { margin: 0 0 1.25rem; color: var(--muted); }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: .75rem;
+    }
+
+    .controls input[type="range"] { flex: 1; min-width: 160px; accent-color: var(--forest); }
+    .controls output { min-width: 4.5rem; font-variant-numeric: tabular-nums; }
+
+    button {
+      font: inherit;
+      padding: .5rem 1.1rem;
+      border-radius: 8px;
+      border: 1px solid var(--forest);
+      background: var(--forest);
+      color: #fff;
+      cursor: pointer;
+    }
+    button:hover { background: var(--forest-dark); }
+    button.ghost { background: transparent; color: var(--forest); }
+    button.ghost:hover { background: rgba(47, 93, 70, .08); }
+
+    .deck {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 1.5rem 1rem 3rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(var(--card-w), 1fr));
+      gap: 1.25rem;
+      justify-items: center;
+      perspective: 1200px;
+    }
+
+    /* ---- The flip ---- */
+    .card {
+      width: var(--card-w);
+      height: var(--card-h);
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform var(--flip-ms) cubic-bezier(.2, .7, .2, 1);
+    }
+    .card.is-open { transform: rotateY(180deg); }
+
+    .face {
+      position: absolute;
+      inset: 0;
+      border-radius: 14px;
+      overflow: hidden;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, .15);
+    }
+
+    /* Back of card (what you see before it opens) */
+    .face--back {
+      background:
+        repeating-linear-gradient(45deg, rgba(255,255,255,.06) 0 10px, transparent 10px 20px),
+        var(--forest);
+      color: #e9f1ec;
+      display: grid;
+      place-items: center;
+      text-align: center;
+    }
+    .face--back .badge {
+      width: 84px; height: 84px;
+      border: 2px solid currentColor;
+      border-radius: 50%;
+      display: grid; place-items: center;
+      font-size: 2rem; font-weight: 700;
+    }
+    .face--back small { display: block; margin-top: .75rem; letter-spacing: .1em; text-transform: uppercase; }
+
+    /* Front of card (the reveal) */
+    .face--front {
+      transform: rotateY(180deg);
+      background: #fff;
+      display: flex;
+      flex-direction: column;
+    }
+    .face--front img {
+      width: 100%;
+      height: 60%;
+      object-fit: cover;
+      background: #c9d6cd;
+      display: block;
+    }
+    .face--front .body { padding: .75rem .9rem; flex: 1; display: flex; flex-direction: column; }
+    .face--front h2 { margin: 0; font-size: 1.1rem; }
+    .face--front .state { margin: .15rem 0 .5rem; color: var(--muted); font-size: .85rem; }
+    .face--front .fact { margin: 0; font-size: .85rem; line-height: 1.4; }
+    .face--front .credit { margin-top: auto; font-size: .7rem; color: var(--muted); }
+    .face--front .credit a { color: inherit; }
+
+    @media (prefers-reduced-motion: reduce) {
+      .card { transition: none; }
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <h1>National parks</h1>
+    <p>Cards flip open one after another on a timer.</p>
+
+    <div class="controls">
+      <label for="delay">Delay between cards</label>
+      <input type="range" id="delay" min="200" max="2000" step="100" value="700">
+      <output id="delay-out" for="delay">700 ms</output>
+      <button id="play" type="button">Reveal</button>
+      <button id="reset" type="button" class="ghost">Reset</button>
+    </div>
+  </header>
+
+  <main id="deck" class="deck" aria-live="polite"></main>
+
+  <script src="js/script.js"></script>
+</body>
+</html>

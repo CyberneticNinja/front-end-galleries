@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Front-end Galleries</title>
+  <style>
+    :root { --bg: #f6f5f1; --ink: #18181b; --muted: #6b6b70; --line: #e2e1dc; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--ink); font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+    main { max-width: 960px; margin: 0 auto; padding: 4rem 1.25rem; }
+    h1 { font-size: clamp(2rem, 5vw, 3rem); margin: 0 0 .5rem; letter-spacing: -.02em; }
+    .intro { color: var(--muted); margin: 0 0 2.5rem; }
+    ul { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem; }
+    a { display: block; height: 100%; padding: 1.25rem; background: #fff; border: 1px solid var(--line); border-radius: 14px;
+      color: inherit; text-decoration: none; transition: transform .2s ease, border-color .2s ease; }
+    a:hover { transform: translateY(-3px); border-color: var(--ink); }
+    strong { display: block; margin-bottom: .35rem; }
+    span { color: var(--muted); font-size: .9rem; line-height: 1.5; }
+    .tag { display: inline-block; margin-top: .75rem; font-size: .72rem; padding: .2rem .55rem; border-radius: 999px; background: #efeee9; color: var(--muted); }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Front-end galleries</h1>
+    <p class="intro">Ready-to-use interactive designs. Plain HTML, CSS and JavaScript.</p>
+    <ul>
+      <li><a href="time-card-reveal.html"><strong>Timed card reveal</strong><span>Cards flip open one after another on a timer.</span><em class="tag">CSS 3D</em></a></li>
+      <li><a href="slider.html"><strong>Card slider</strong><span>Full-screen background with cards that grow into it.</span><em class="tag">Auto-advance</em></a></li>
+      <li><a href="fullscreen.html"><strong>Fullscreen sections</strong><span>Slide sideways between sections, up and down inside one.</span><em class="tag">Scroll / swipe</em></a></li>
+      <li><a href="prime.html"><strong>Streaming rows</strong><span>Edge-to-edge tiles that grow on hover.</span><em class="tag">Hover</em></a></li>
+      <li><a href="curved.html"><strong>Curved gallery</strong><span>Cards on the inside of a turning cylinder.</span><em class="tag">CSS 3D · Drag</em></a></li>
+      <li><a href="mosaic.html"><strong>Mosaic hero</strong><span>One image through morphing rounded tiles.</span><em class="tag">Animated</em></a></li>
+      <li><a href="auth-flip.html"><strong>Login / register flip</strong><span>A book page turns between the two forms.</span><em class="tag">CSS 3D · Forms</em></a></li>
+      <li><a href="card-fan.html"><strong>Card fan</strong><span>A hand of cards that fans out on hover.</span><em class="tag">Hover</em></a></li>
+      <li><a href="cars-360.html"><strong>360° car showroom</strong><span>Drag to turn the car. 36 photos, swapped as you move.</span><em class="tag">Image sequence</em></a></li>
+      <li><a href="accordion.html"><strong>Model accordion</strong><span>Seven car panels; the one you hover opens with its details.</span><em class="tag">Hover · CSS only</em></a></li>
+      <li><a href="diamond.html"><strong>3D gemstone</strong><span>A brilliant-cut stone built in code, with a stone picker.</span><em class="tag">Three.js · Needs a server</em></a></li>
+    </ul>
+  </main>
+</body>
+</html>

@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Wild Streams — Hover Rows</title>
+  <style>
+    :root {
+      --bg: #0f171e;           /* Prime-style dark navy */
+      --panel: #1a242f;
+      --text: #fff;
+      --muted: #8197a4;
+      --accent: #00a8e1;
+      --edge: 4vw;             /* left/right page padding */
+      --per-row: 6;            /* tiles visible at once */
+      --tile-w: calc((100vw - var(--edge) * 2) / var(--per-row));
+      --grow: 1.8;             /* hover scale */
+      --lift: 100px;            /* room above/below a row for the grown tile */
+    }
+    @media (max-width: 1100px) { :root { --per-row: 4; } }
+    @media (max-width: 700px)  { :root { --per-row: 2.3; --grow: 1.25; } }
+
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--text);
+      font-family: system-ui, -apple-system, "Segoe UI", sans-serif; overflow-x: hidden; }
+
+    header { padding: 1.25rem var(--edge); display: flex; align-items: center; gap: 2rem; }
+    header .logo { font-weight: 800; font-size: 1.4rem; }
+    header .logo span { color: var(--accent); }
+    header nav { display: flex; gap: 1.25rem; color: var(--muted); font-size: .95rem; }
+
+    .row { position: relative; margin-bottom: 3rem; }
+    .row h2 { font-size: 1.15rem; margin: 0 var(--edge); position: relative; z-index: 2; }
+
+    /* The scroller. Padding + negative margin gives grown tiles room,
+       because overflow-x: auto also clips vertically. */
+    .scroller {
+      display: flex;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scroll-behavior: smooth;
+      scroll-snap-type: x mandatory;
+      scroll-padding-inline: var(--edge);
+      padding: var(--lift) var(--edge);
+      margin: calc(var(--lift) * -1) 0;
+      scrollbar-width: none;
+    }
+    .scroller::-webkit-scrollbar { display: none; }
+
+    /* Tiles touch: no gap */
+    .tile {
+      flex: 0 0 var(--tile-w);
+      aspect-ratio: 16 / 9;
+      position: relative;
+      scroll-snap-align: start;
+      background: var(--panel) center / cover no-repeat;
+      transform-origin: center;
+      transition: transform .3s ease, box-shadow .3s ease;
+      transition-delay: 0s;           /* shrink back immediately */
+      cursor: pointer;
+      outline: none;
+    }
+    .tile.origin-left  { transform-origin: left center; }
+    .tile.origin-right { transform-origin: right center; }
+
+    .tile:hover, .tile:focus-visible {
+      transform: scale(var(--grow));
+      z-index: 10;
+      box-shadow: 0 12px 30px rgba(0,0,0,.6);
+      border-radius: 6px;
+      transition-delay: .25s;          /* grow after a short hover, like Prime */
+    }
+    .tile:focus-visible { box-shadow: 0 0 0 3px var(--accent), 0 12px 30px rgba(0,0,0,.6); }
+
+    /* Title strip always visible, details only when grown */
+    .tile .title { position: absolute; left: 0; right: 0; bottom: 0; padding: 1.5rem .6rem .45rem;
+      font-size: .8rem; font-weight: 600; background: linear-gradient(transparent, rgba(0,0,0,.8));
+      transition: opacity .2s ease; }
+    .tile:hover .title, .tile:focus-visible .title { opacity: 0; transition-delay: .3s; }
+    .tile .details { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: flex-end;
+      padding: .6rem; background: linear-gradient(transparent 30%, rgba(15,23,30,.95));
+      opacity: 0; transition: opacity .2s ease; border-radius: inherit; }
+    .tile:hover .details, .tile:focus-visible .details { opacity: 1; transition-delay: .35s; }
+    .details strong { font-size: .75rem; }
+    .details .meta { font-size: .6rem; color: var(--muted); margin: .15rem 0 .35rem; }
+    .details .meta b { color: #4fd17a; font-weight: 600; }
+    .details p { font-size: .58rem; line-height: 1.35; margin: 0 0 .4rem; color: #d8e1e6; }
+    .details .actions { display: flex; gap: .35rem; }
+    .details .play { width: 22px; height: 22px; border-radius: 50%; background: #fff; color: #000;
+      display: grid; place-items: center; font-size: .6rem; }
+    .details .add { width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid #fff;
+      display: grid; place-items: center; font-size: .75rem; }
+
+    /* Arrow buttons on the row edges */
+    .arrow { position: absolute; top: 2rem; bottom: 0; width: var(--edge); z-index: 20; border: 0;
+      background: rgba(15,23,30,.6); color: #fff; font-size: 1.8rem; cursor: pointer; opacity: 0;
+      transition: opacity .2s; }
+    .row:hover .arrow { opacity: 1; }
+    .arrow:hover { background: rgba(15,23,30,.85); }
+    .arrow.prev { left: 0; }
+    .arrow.next { right: 0; }
+    .arrow[hidden] { display: none; }
+
+    footer { padding: 2rem var(--edge); color: var(--muted); font-size: .75rem; }
+    footer a { color: inherit; }
+
+    @media (prefers-reduced-motion: reduce) { .tile, .scroller { transition: none; scroll-behavior: auto; } }
+    @media (hover: none) { .arrow { display: none; } }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">wild<span>streams</span></div>
+    <nav><span>Home</span><span>Films</span><span>Series</span><span>My list</span></nav>
+  </header>
+
+  <main id="rows"></main>
+
+  <footer>
+    Demo only. Park photos from Wikimedia Commons (NPS public domain, Rainer Marks public domain,
+    James St. John CC BY 2.0, Ken Lund CC BY-SA 2.0). Other photos from <a href="https://picsum.photos" target="_blank" rel="noopener">Lorem Picsum</a> (Unsplash).
+    Titles are invented.
+  </footer>
+
+  <script src="js/prime.js"></script>
+</body>
+</html>
